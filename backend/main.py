@@ -1,4 +1,6 @@
-from flask import Flask, request, render_template, send_file
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pptx import Presentation
 from docx import Document
 from pptx.util import Pt
@@ -8,7 +10,54 @@ from pptx.oxml import parse_xml
 from pptx.oxml.ns import nsdecls
 import os
 
-app = Flask(__name__)
+app = FastAPI()
+
+# Allow CORS for all origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post("/convert")
+async def convert(docx_file: UploadFile = File(...)):
+    output_pptx = 'output.pptx'
+
+    doc = Document(docx_file.file)
+    prs = Presentation()
+
+    # Split the text into chunks of 4 lines, keeping headers
+    lines = []
+    chunks = []
+    current_chunk = []
+    current_title = ""
+
+    for paragraph in doc.paragraphs:
+        if paragraph.style.name.startswith('Heading'):
+            if current_chunk:
+                chunks.append((current_title, current_chunk))
+                current_chunk = []
+            current_title = paragraph.text
+        else:
+            if paragraph.text.strip() != "":
+                current_chunk.append(paragraph.text)
+                if len(current_chunk) == 4:
+                    chunks.append((current_title, current_chunk))
+                    current_chunk = []
+
+    if current_chunk:
+        chunks.append((current_title, current_chunk))
+
+    # Add each chunk as a new slide
+    for title, chunk in chunks:
+        add_slide_with_text(prs, title, chunk)
+
+    # Save the updated presentation
+    prs.save(output_pptx)
+
+    return FileResponse(output_pptx, filename=output_pptx, media_type='application/vnd.openxmlformats-officedocument.presentationml.presentation')
 
 def set_white_text_formatting(text_frame, font_size):
     for paragraph in text_frame.paragraphs:
@@ -53,49 +102,3 @@ def add_slide_with_text(prs, title_text, lines):
 
     # Set the background color to dark
     set_slide_background(slide, RGBColor(0, 0, 0))  # Dark background
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/convert', methods=['POST'])
-def convert():
-    docx_file = request.files['docx_file']
-    output_pptx = 'output.pptx'
-
-    doc = Document(docx_file)
-    prs = Presentation()
-
-    # Split the text into chunks of 4 lines, keeping headers
-    lines = []
-    chunks = []
-    current_chunk = []
-    current_title = ""
-
-    for paragraph in doc.paragraphs:
-        if paragraph.style.name.startswith('Heading'):
-            if current_chunk:
-                chunks.append((current_title, current_chunk))
-                current_chunk = []
-            current_title = paragraph.text
-        else:
-            if paragraph.text.strip() != "":
-                current_chunk.append(paragraph.text)
-                if len(current_chunk) == 4:
-                    chunks.append((current_title, current_chunk))
-                    current_chunk = []
-
-    if current_chunk:
-        chunks.append((current_title, current_chunk))
-
-    # Add each chunk as a new slide
-    for title, chunk in chunks:
-        add_slide_with_text(prs, title, chunk)
-
-    # Save the updated presentation
-    prs.save(output_pptx)
-
-    return send_file(output_pptx, as_attachment=True)
-
-if __name__ == '__main__':
-    app.run(debug=True)
