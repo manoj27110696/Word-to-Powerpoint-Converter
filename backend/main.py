@@ -17,8 +17,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["POST"],  # Restrict to the methods you need
+    allow_headers=["*"],  # You can also restrict headers if needed
 )
 
 @app.post("/convert")
