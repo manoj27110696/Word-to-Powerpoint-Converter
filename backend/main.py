@@ -1,13 +1,11 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pptx import Presentation
-from docx import Document
-from pptx.util import Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.oxml import parse_xml
 from pptx.oxml.ns import nsdecls
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from docx import Document
+from pptx import Presentation
 import os
 
 app = FastAPI()
@@ -24,11 +22,18 @@ app.add_middleware(
 @app.post("/convert")
 async def convert(docx_file: UploadFile = File(...)):
     output_pptx = 'output.pptx'
-
     doc = Document(docx_file.file)
     prs = Presentation()
 
-    # Split the text into chunks of 4 lines, keeping headers
+    chunks = extract_chunks(doc)
+    for title, lines in chunks:
+        add_slide_with_text(prs, title, lines)
+
+    prs.save(output_pptx)
+    return {"message": "Conversion successful", "output_file": output_pptx}
+
+def extract_chunks(doc):
+    """Extract chunks of text from the document."""
     lines = []
     chunks = []
     current_chunk = []
@@ -50,40 +55,11 @@ async def convert(docx_file: UploadFile = File(...)):
     if current_chunk:
         chunks.append((current_title, current_chunk))
 
-    # Add each chunk as a new slide
-    for title, chunk in chunks:
-        add_slide_with_text(prs, title, chunk)
-
-    # Save the updated presentation
-    prs.save(output_pptx)
-
-    return FileResponse(output_pptx, filename=output_pptx, media_type='application/vnd.openxmlformats-officedocument.presentationml.presentation')
-
-def set_white_text_formatting(text_frame, font_size):
-    for paragraph in text_frame.paragraphs:
-        for run in paragraph.runs:
-            run.font.color.rgb = RGBColor(255, 255, 255)  # White text
-            run.font.size = Pt(font_size)  # Set font size
-        paragraph.alignment = PP_ALIGN.CENTER  # Center the text
-
-def remove_bullets(text_frame):
-    for paragraph in text_frame.paragraphs:
-        paragraph.level = 0  # Ensure no bullet levels are set
-        pPr = paragraph._element.get_or_add_pPr()  # Get or add paragraph properties
-        if pPr is not None:
-            buNone = pPr.find('.//a:buNone', namespaces={'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'})
-            if buNone is None:
-                buNone = parse_xml('<a:buNone %s/>' % nsdecls('a'))
-                pPr.append(buNone)
-
-def set_slide_background(slide, color):
-    background = slide.background
-    fill = background.fill
-    fill.solid()
-    fill.fore_color.rgb = color
+    return chunks
 
 def add_slide_with_text(prs, title_text, lines):
-    slide_layout = prs.slide_layouts[1]  # Title and Content layout
+    """Add a slide with the given title and lines of text."""
+    slide_layout = prs.slide_layouts[1]  # Use the "Title and Content" layout
     slide = prs.slides.add_slide(slide_layout)
     title = slide.shapes.title
     content = slide.placeholders[1]
@@ -91,14 +67,30 @@ def add_slide_with_text(prs, title_text, lines):
     title.text = title_text
     content.text = "\n".join(lines)
 
-    # Set font sizes
+    # Set title font size
     for paragraph in title.text_frame.paragraphs:
         for run in paragraph.runs:
-            run.font.size = Pt(60)  # Set header font size to 60
+            run.font.size = Pt(60)
 
-    # Remove bullets and center text
     remove_bullets(content.text_frame)
-    set_white_text_formatting(content.text_frame, 54)  # Set text font size to 54
+    set_white_text_formatting(content.text_frame)
+    set_slide_background(slide, RGBColor(0, 0, 0))
 
-    # Set the background color to dark
-    set_slide_background(slide, RGBColor(0, 0, 0))  # Dark background
+def remove_bullets(text_frame):
+    """Remove bullets from the text frame."""
+    for paragraph in text_frame.paragraphs:
+        paragraph.level = 0
+
+def set_white_text_formatting(text_frame):
+    """Set text formatting to white with a specific font size."""
+    for paragraph in text_frame.paragraphs:
+        for run in paragraph.runs:
+            run.font.color.rgb = RGBColor(255, 255, 255)
+            run.font.size = Pt(54)
+
+def set_slide_background(slide, color):
+    """Set the slide background color."""
+    background = slide.background
+    fill = background.fill
+    fill.solid()
+    fill.fore_color.rgb = color
