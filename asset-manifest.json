@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/Word-to-Powerpoint-Converter/static/css/main.edd7e113.css",
+    "main.js": "/Word-to-Powerpoint-Converter/static/js/main.1493cc07.js",
+    "static/js/453.4bedd1c6.chunk.js": "/Word-to-Powerpoint-Converter/static/js/453.4bedd1c6.chunk.js",
+    "index.html": "/Word-to-Powerpoint-Converter/index.html",
+    "main.edd7e113.css.map": "/Word-to-Powerpoint-Converter/static/css/main.edd7e113.css.map",
+    "main.1493cc07.js.map": "/Word-to-Powerpoint-Converter/static/js/main.1493cc07.js.map",
+    "453.4bedd1c6.chunk.js.map": "/Word-to-Powerpoint-Converter/static/js/453.4bedd1c6.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.edd7e113.css",
+    "static/js/main.1493cc07.js"
+  ]
+}
