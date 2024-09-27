@@ -2,8 +2,7 @@ from tkinter import N
 from fastapi.responses import FileResponse
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
-from pptx.oxml import parse_xml
-from pptx.oxml.ns import nsdecls
+from pptx.oxml import OxmlElement
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from docx import Document
