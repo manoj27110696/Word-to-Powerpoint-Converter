@@ -84,7 +84,7 @@ def add_slide_with_text(prs, title_text, lines):
 def remove_bullets(text_frame):
     """Remove bullets from the text frame."""
     for paragraph in text_frame.paragraphs:
-        paragraph.level = 0
+       paragraph._element.get_or_add_pPr().clear()  # Clear paragraph properties to remove bullets
 def set_white_text_formatting(text_frame):
     """Set text formatting to white with a specific font size."""
     for paragraph in text_frame.paragraphs:
