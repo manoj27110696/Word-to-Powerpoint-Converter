@@ -1,3 +1,4 @@
+from fastapi.responses import FileResponse
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.oxml import parse_xml
@@ -22,6 +23,8 @@ app.add_middleware(
 
 @app.post("/convert")
 async def convert(docx_file: UploadFile = File(...)):
+    if docx_file.content_type != "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        raise HTTPException(status_code=400, detail="Invalid file type. Only DOCX files are allowed.")
     output_pptx = 'output.pptx'
     doc = Document(docx_file.file)
     prs = Presentation()
@@ -31,7 +34,7 @@ async def convert(docx_file: UploadFile = File(...)):
         add_slide_with_text(prs, title, lines)
 
     prs.save(output_pptx)
-    return {"message": "Conversion successful", "output_file": output_pptx}
+    return FileResponse(output_pptx, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="output.pptx")
 
 def extract_chunks(doc):
     """Extract chunks of text from the document."""
