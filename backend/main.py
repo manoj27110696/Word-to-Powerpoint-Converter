@@ -6,6 +6,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from docx import Document
 from pptx import Presentation
+from pptx.util import Pt  # Import Pt from pptx.util
 import os
 
 app = FastAPI()
