@@ -2,7 +2,8 @@ from tkinter import N
 from fastapi.responses import FileResponse
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
-from pptx.oxml import OxmlElement
+from pptx.oxml.ns import qn
+from pptx.oxml import parse_xml
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from docx import Document
@@ -88,7 +89,7 @@ def remove_bullets(text_frame):
             # Remove bullet properties
             buNone = pPr.find("a:buNone", namespaces=pPr.nsmap)
             if buNone is None:
-                buNone = OxmlElement("a:buNone")
+                buNone = parse_xml('<a:buNone xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"/>')
                 pPr.append(buNone)
 def set_white_text_formatting(text_frame):
     """Set text formatting to white with a specific font size."""
