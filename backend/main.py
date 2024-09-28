@@ -14,6 +14,7 @@ from tkinter import N
 from fastapi.responses import FileResponse
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
+from pptx.enum.shapes import MSO_SHAPE_TYPE, PP_PLACEHOLDER
 from pptx.oxml.ns import qn
 from pptx.oxml import parse_xml
 from fastapi import FastAPI, UploadFile, File
@@ -47,7 +48,7 @@ async def convert(docx_file: UploadFile = File(...)):
     # Center text in each slide
     for slide in prs.slides:
         center_text(slide)
-        remove_headers(slide)
+      ##  remove_headers(slide)
 
     prs.save(output_pptx)
     return FileResponse(output_pptx, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="output.pptx")
@@ -127,9 +128,10 @@ def center_text(slide):
                 continue
             for paragraph in shape.text_frame.paragraphs:
                 paragraph.alignment = PP_ALIGN.CENTER
-def remove_headers(slide):
-    """Remove headers from the slide."""
-    for shape in slide.shapes:
-        if shape.is_placeholder and shape.placeholder_format.idx == 0:  # Typically, the title placeholder has idx 0
-            shape.text = ""    
+# def remove_headers(slide):
+#     """Remove header placeholders from the slide."""
+#     for shape in slide.shapes:
+#         if shape.is_placeholder and shape.placeholder_format.type == PP_PLACEHOLDER.TITLE:  # Typically, the header placeholder has idx 1
+#             sp = shape._element
+#             sp.getparent().remove(sp)    
     
