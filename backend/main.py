@@ -10,6 +10,16 @@ from docx import Document
 from pptx import Presentation
 from pptx.util import Pt  # Import Pt from pptx.util
 import os
+from tkinter import N
+from fastapi.responses import FileResponse
+from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN
+from pptx.oxml.ns import qn
+from pptx.oxml import parse_xml
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from docx import Document
+from pptx import Presentation
 
 app = FastAPI()
 
@@ -33,6 +43,11 @@ async def convert(docx_file: UploadFile = File(...)):
     chunks = extract_chunks(doc)
     for title, lines in chunks:
         add_slide_with_text(prs, title, lines)
+    
+    # Center text in each slide
+    for slide in prs.slides:
+        center_text(slide)
+        remove_headers(slide)
 
     prs.save(output_pptx)
     return FileResponse(output_pptx, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="output.pptx")
@@ -104,3 +119,17 @@ def set_slide_background(slide, color):
     fill = background.fill
     fill.solid()
     fill.fore_color.rgb = color
+
+def center_text(slide):
+        """Center text in each text frame of the slide."""
+        for shape in slide.shapes:
+            if not shape.has_text_frame:
+                continue
+            for paragraph in shape.text_frame.paragraphs:
+                paragraph.alignment = PP_ALIGN.CENTER
+def remove_headers(slide):
+    """Remove headers from the slide."""
+    for shape in slide.shapes:
+        if shape.is_placeholder and shape.placeholder_format.idx == 0:  # Typically, the title placeholder has idx 0
+            shape.text = ""    
+    
