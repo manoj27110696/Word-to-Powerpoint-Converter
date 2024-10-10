@@ -60,8 +60,14 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <h1>DOCX to PPTX Converter</h1>
+    <div>
+      <header>
+        <h1>Word to PPT Converter</h1>
+      </header>
+      <div id="root">
+    <div className="container">
+    <h1>Convert Your Documents</h1>
+    <p>Upload your Word document to convert it into a PowerPoint presentation.</p>
       <form onSubmit={handleSubmit}>
         <input type="file" accept=".docx" onChange={handleFileChange} required />
         {validationErrors.file && <p className="validation-error">{validationErrors.file}</p>} {/* Conditionally render validation error */}
@@ -74,6 +80,11 @@ function App() {
           <a href={downloadLink} download="output.pptx">Download Converted PPTX</a>
         </div>
       )}
+      </div>
+    </div>
+    <footer>
+        <p>&copy; 2023 Manoj. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
